@@ -15,15 +15,57 @@ namespace HH.AutoUpdater
 {
     class Program
     {
-        static void Main(string[] args)
+
+        /// <summary>
+        /// Заготовка
+        /// </summary>
+        static async void getContent()
         {
+            var client = new HttpClient();
+            client.BaseAddress = new Uri("https://api.hh.ru");
+            client.DefaultRequestHeaders.UserAgent.TryParseAdd("hhApp");
+            client.DefaultRequestHeaders.Add("Authorization", "Bearer GC1MMBEOQVSPP0AFPGC2OCCJK465T3NL5IIHE0IMRPKVBR35IA17N0SM5D0K3IVO");
+            client.DefaultRequestHeaders.Add("Accept", "*/*");
+            HttpResponseMessage response = new HttpResponseMessage();
+
+            response = await client.GetAsync("https://api.hh.ru/resumes/mine");
+            var s = await response.Content.ReadAsStringAsync();
+            Console.Write(s);
+            Console.ReadKey();
+
+        }
+
+        
+        static int Main(string[] args)
+        {
+
+            var Options = new Dictionary<string, string>();
+            
+            var option_name = "";
+
+            foreach(var arg in args)
+            {
+                if (arg.StartsWith("-"))
+                    option_name = arg.Substring(1);
+                else
+                    Options.Add(option_name, arg);                   
+            }
+            
+            string user_token;
+
+            if(!Options.TryGetValue("token", out user_token))    
+            {
+                Console.WriteLine("Не указан токен пользователя для аутентификации");
+                return 0x1;
+            }
+
             Uri address = new Uri("https://api.hh.ru/resumes/mine");
 
             HttpWebRequest wr = (HttpWebRequest)HttpWebRequest.Create(address);
 
             wr.Credentials = CredentialCache.DefaultCredentials;
             wr.UseDefaultCredentials = false;
-            wr.Headers[HttpRequestHeader.Authorization] = "Bearer GC1MMBEOQVSPP0AFPGC2OCCJK465T3NL5IIHE0IMRPKVBR35IA17N0SM5D0K3IVO";
+            wr.Headers[HttpRequestHeader.Authorization] = "Bearer " + user_token;
             wr.Accept = "*/*";
             //  wr.Proxy = new WebProxy("127.0.0.1:8888");
 
@@ -95,8 +137,11 @@ namespace HH.AutoUpdater
 
                 Console.WriteLine(wre.StatusCode.ToString() + " " + wre.StatusDescription);
                 if (wre.StatusCode == HttpStatusCode.NoContent)
-                    Console.WriteLine("Резюме обновлено");
+                    Console.WriteLine("Резюме " + id + " обновлено");
+                else
+                    Console.WriteLine("Резюме " + id + " не обновлено");
             }
+            return 0x0;
         }
 
     }
